@@ -3,12 +3,41 @@
 #include <string>
 #include <vector>
 
+#include <stdexcept>
+
 #include "linux_parser.h"
+
+// For debugging
+#include <iostream>
+//
 
 using std::stof;
 using std::string;
 using std::to_string;
 using std::vector;
+
+string LinuxParser::findAndReturnLine(string filePath, std::string keyToFind) {
+
+  string line, key;
+
+  std::ifstream filestream(filePath);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      // std::replace(line.begin(), line.end(), ' ', '_');
+      std::replace(line.begin(), line.end(), '=', ' ');
+      std::replace(line.begin(), line.end(), '"', ' ');
+      std::istringstream linestream(line);
+      while (linestream >> key) {
+        if (key == keyToFind) {
+          // std::replace(value.begin(), value.end(), '_', ' ');
+          return line;
+        }
+      }
+    }
+  } 
+  throw std::runtime_error("keyToFind was not found");
+}
+
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::OperatingSystem() {
@@ -35,13 +64,13 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, kernel;
+  string os, version, kernel;
   string line;
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
     std::istringstream linestream(line);
-    linestream >> os >> kernel;
+    linestream >> os >> version >> kernel;
   }
   return kernel;
 }
@@ -67,10 +96,44 @@ vector<int> LinuxParser::Pids() {
 }
 
 // TODO: Read and return the system memory utilization
-float LinuxParser::MemoryUtilization() { return 0.0; }
+float LinuxParser::MemoryUtilization() { 
+  // Use /proc/meminfo to get memory utilization information
+  string key, value, line;
+  int MemTotal, MemFree;
+  std::ifstream filestream(kProcDirectory + kMeminfoFilename);
+  if (filestream.is_open()) {
+    while (std::getline(filestream, line)) {
+      std::replace(line.begin(), line.end(), ':', ' ');
+      std::replace(line.begin(), line.end(), 'k', ' ');
+      std::replace(line.begin(), line.end(), 'B', ' ');
+      std::istringstream linestream(line);
+      while(linestream >> key >> value) {
+        if (key == "MemTotal") {
+          MemTotal = stoi(value);
+        }
+        if (key == "MemFree") {
+          MemFree = stoi(value);
+        }        
+      }
+    }
+  }
+
+  // LinuxParser::findAndReturnLine(kProcDirectory + kMeminfoFilename, "MemTotal")
+
+  return (((float)MemTotal - (float) MemFree)/( (float) MemTotal)); 
+}
 
 // TODO: Read and return the system uptime
-long LinuxParser::UpTime() { return 0; }
+long LinuxParser::UpTime() {
+ string uptime, line;
+ std::ifstream stream(kProcDirectory + kUptimeFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> uptime;
+  }
+ return (long int) std::stof(uptime);
+}
 
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
@@ -89,10 +152,30 @@ long LinuxParser::IdleJiffies() { return 0; }
 vector<string> LinuxParser::CpuUtilization() { return {}; }
 
 // TODO: Read and return the total number of processes
-int LinuxParser::TotalProcesses() { return 0; }
+int LinuxParser::TotalProcesses() { 
+  auto lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "processes");
+
+  std::istringstream linestream(lineOfInt);
+
+  string key, value;
+
+  linestream >> key >> value;
+
+  return std::stoi(value); 
+}
 
 // TODO: Read and return the number of running processes
-int LinuxParser::RunningProcesses() { return 0; }
+int LinuxParser::RunningProcesses() { 
+  auto lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "procs_running");
+
+  std::istringstream linestream(lineOfInt);
+
+  string key, value;
+
+  linestream >> key >> value;
+
+  return std::stoi(value); 
+}
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function

@@ -52,6 +52,11 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
+
+// Additional Helper functions
+
+std::string findAndReturnLine(std::string filePath, std::string keyToFind);
+
 };  // namespace LinuxParser
 
 #endif
