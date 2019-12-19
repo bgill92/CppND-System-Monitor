@@ -23,7 +23,7 @@ string LinuxParser::findAndReturnLine(string filePath, std::string keyToFind) {
   std::ifstream filestream(filePath);
   if (filestream.is_open()) {
     while (std::getline(filestream, line)) {
-      // std::replace(line.begin(), line.end(), ' ', '_');
+      // std::replace(line.begin(), line.end(), ':', '_');
       std::replace(line.begin(), line.end(), '=', ' ');
       std::replace(line.begin(), line.end(), '"', ' ');
       std::istringstream linestream(line);
@@ -35,7 +35,8 @@ string LinuxParser::findAndReturnLine(string filePath, std::string keyToFind) {
       }
     }
   } 
-  throw std::runtime_error("keyToFind was not found");
+  // throw std::runtime_error("keyToFind was not found");
+  return "";
 }
 
 
@@ -153,8 +154,12 @@ vector<string> LinuxParser::CpuUtilization() { return {}; }
 
 // TODO: Read and return the total number of processes
 int LinuxParser::TotalProcesses() { 
-  auto lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "processes");
-
+  string lineOfInt;
+  try {
+   lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "processes");
+  } catch (const std::exception& e) {
+    std::cout << "Failure in LinuxParser::TotalProcesses()" << std::endl;
+  }
   std::istringstream linestream(lineOfInt);
 
   string key, value;
@@ -166,8 +171,12 @@ int LinuxParser::TotalProcesses() {
 
 // TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses() { 
-  auto lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "procs_running");
-
+  string lineOfInt;
+  try {
+    lineOfInt = LinuxParser::findAndReturnLine(kProcDirectory + kStatFilename, "procs_running");
+  } catch(const std::exception& e) {
+    std::cout << "Failure in LinuxParser::RunningProcesses()" << std::endl;
+  }
   std::istringstream linestream(lineOfInt);
 
   string key, value;

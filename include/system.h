@@ -7,6 +7,8 @@
 #include "process.h"
 #include "processor.h"
 
+#include <set>
+
 class System {
  public:
   Processor& Cpu();                   // TODO: See src/system.cpp
@@ -22,6 +24,7 @@ class System {
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
+  std::set<Process> set_proc_ordered_;
 };
 
 #endif
